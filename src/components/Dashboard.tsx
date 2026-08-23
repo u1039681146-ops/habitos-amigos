@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { todayStr } from '../lib/date';
 import type { DashboardData } from '../types';
 
-const SEQ_STEPS = ['#e1e0d9', '#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b'];
+const SEQ_STEPS = ['#e1e0d9', '#d3f0da', '#a8e2b8', '#7cd394', '#4fc072', '#2fa354', '#1f7a3c', '#0f4d24'];
 
 function heatColor(pct: number) {
   if (pct <= 0) return SEQ_STEPS[0];
@@ -21,7 +22,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     api
-      .dashboard(30)
+      .dashboard(30, todayStr())
       .then(setData)
       .catch((e) => setError(e.message));
   }, []);

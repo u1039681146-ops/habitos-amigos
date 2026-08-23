@@ -5,24 +5,33 @@ function toDateStr(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+// El cliente manda su fecha local de "hoy" (parametro today) para que el
+// mapa de calor no se desalinee con lo que ve en el diario: el servidor
+// corre en UTC y el grupo esta en horario de España, asi que calcular
+// "hoy" con new Date() aqui desfasaba el ultimo dia varias horas al dia.
+function isValidDateStr(s: string | null): s is string {
+  return !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
 // El dashboard es de lectura publica: se muestra en el inicio antes de
 // iniciar sesion, asi que no exige token.
 export default async (req: Request) => {
   const url = new URL(req.url);
   const days = Math.min(30, Math.max(1, Number(url.searchParams.get('days') || 14)));
+  const todayParam = url.searchParams.get('today');
+  const todayStr = isValidDateStr(todayParam) ? todayParam : toDateStr(new Date());
 
   const [users, habits, entries] = await Promise.all([getUsers(), getHabits(), getEntries()]);
 
-  const today = new Date();
+  const today = new Date(`${todayStr}T00:00:00Z`);
   const dateList: string[] = [];
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
-    d.setDate(d.getDate() - i);
+    d.setUTCDate(d.getUTCDate() - i);
     dateList.push(toDateStr(d));
   }
 
   const totalHabits = habits.length;
-  const todayStr = toDateStr(today);
 
   const perUser = users.map((u) => {
     const dayStats = dateList.map((date) => {
@@ -42,7 +51,7 @@ export default async (req: Request) => {
     return {
       id: u.id,
       name: u.name,
-      hasPasskey: u.passkeys.length > 0,
+      hasPin: !!u.pinHash,
       days: dayStats,
       streak,
       today: todayInfo,

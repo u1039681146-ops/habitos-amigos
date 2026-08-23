@@ -38,12 +38,8 @@ async function request(path: string, opts: RequestInit = {}) {
 
 export const api = {
   profiles: () => request('/api/profiles'),
-  selectProfile: (userId: string) =>
-    request('/api/select-profile', { method: 'POST', body: JSON.stringify({ userId }) }),
-  webauthnOptions: (userId: string, mode: 'register' | 'authenticate') =>
-    request('/api/webauthn-options', { method: 'POST', body: JSON.stringify({ userId, mode }) }),
-  webauthnVerify: (userId: string, mode: 'register' | 'authenticate', response: unknown) =>
-    request('/api/webauthn-verify', { method: 'POST', body: JSON.stringify({ userId, mode, response }) }),
+  pin: (userId: string, action: 'set' | 'verify', pin: string) =>
+    request('/api/pin', { method: 'POST', body: JSON.stringify({ userId, action, pin }) }),
   habits: () => request('/api/habits'),
   addHabit: (name: string, emoji: string) =>
     request('/api/habits', { method: 'POST', body: JSON.stringify({ action: 'add', name, emoji }) }),
@@ -54,7 +50,8 @@ export const api = {
     request('/api/entries', { method: 'POST', body: JSON.stringify({ action: 'toggle', date, habitId, done }) }),
   saveNote: (date: string, note: string) =>
     request('/api/entries', { method: 'POST', body: JSON.stringify({ action: 'note', date, note }) }),
-  dashboard: (days = 14) => request(`/api/dashboard?days=${days}`),
+  dashboard: (days = 14, today?: string) =>
+    request(`/api/dashboard?days=${days}${today ? `&today=${today}` : ''}`),
   chat: () => request('/api/chat'),
   sendChat: (text: string) => request('/api/chat', { method: 'POST', body: JSON.stringify({ text }) }),
 };

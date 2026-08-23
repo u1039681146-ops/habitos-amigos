@@ -1,17 +1,10 @@
 import { getStore } from '@netlify/blobs';
 import { createHmac, randomBytes } from 'node:crypto';
 
-export type Passkey = {
-  credentialID: string;
-  credentialPublicKey: string; // base64
-  counter: number;
-  transports?: string[];
-};
-
 export type User = {
   id: string;
   name: string;
-  passkeys: Passkey[];
+  pinHash?: string;
 };
 
 export type Habit = {
@@ -36,12 +29,15 @@ export type DiaryNote = {
   updatedAt: string;
 };
 
-const DEFAULT_USERS: User[] = [
-  { id: 'tomas', name: 'Tomás Rodicio', passkeys: [] },
-  { id: 'jose', name: 'José Pernas', passkeys: [] },
-  { id: 'izan', name: 'Izan Martínez', passkeys: [] },
-  { id: 'marco', name: 'Marco Laporta', passkeys: [] },
-  { id: 'leiva', name: 'Marco Leiva', passkeys: [] },
+// El roster de amigos es fijo, asi que vive en el codigo. El pinHash de
+// cada uno se guarda por separado (clave user:<id>) para que crear/cambiar
+// el PIN de una persona nunca pise el de otra que se guarda a la vez.
+const ROSTER: { id: string; name: string }[] = [
+  { id: 'tomas', name: 'Tomás Rodicio' },
+  { id: 'jose', name: 'José Pernas' },
+  { id: 'izan', name: 'Izan Martínez' },
+  { id: 'marco', name: 'Marco Laporta' },
+  { id: 'leiva', name: 'Marco Leiva' },
 ];
 
 export type ChatMessage = {
@@ -63,26 +59,27 @@ function store() {
   return getStore('habitos');
 }
 
+type UserRecord = { pinHash?: string };
+
 export async function getUsers(): Promise<User[]> {
   const s = store();
-  const data = (await s.get('users', { type: 'json' })) as User[] | null;
-  if (!data) {
-    await s.setJSON('users', DEFAULT_USERS);
-    return DEFAULT_USERS;
-  }
-  // Rellena amigos nuevos anadidos a DEFAULT_USERS que aun no esten guardados.
-  const existingIds = new Set(data.map((u) => u.id));
-  const missing = DEFAULT_USERS.filter((u) => !existingIds.has(u.id));
-  if (missing.length > 0) {
-    const merged = [...data, ...missing];
-    await s.setJSON('users', merged);
-    return merged;
-  }
-  return data;
+  return Promise.all(
+    ROSTER.map(async (u) => {
+      const rec = (await s.get(`user:${u.id}`, { type: 'json' })) as UserRecord | null;
+      return { ...u, pinHash: rec?.pinHash };
+    }),
+  );
 }
 
-export async function saveUsers(users: User[]) {
-  await store().setJSON('users', users);
+export async function getUser(id: string): Promise<User | null> {
+  const base = ROSTER.find((u) => u.id === id);
+  if (!base) return null;
+  const rec = (await store().get(`user:${id}`, { type: 'json' })) as UserRecord | null;
+  return { ...base, pinHash: rec?.pinHash };
+}
+
+export async function setUserPinHash(id: string, pinHash: string) {
+  await store().setJSON(`user:${id}`, { pinHash });
 }
 
 export async function getHabits(): Promise<Habit[]> {
@@ -126,16 +123,11 @@ export async function saveChatMessages(messages: ChatMessage[]) {
   await store().setJSON('chat', messages);
 }
 
-export async function getChallenge(userId: string, kind: string): Promise<string | null> {
-  const data = await store().get(`challenge:${kind}:${userId}`, { type: 'text' });
-  return data || null;
-}
-
-export async function setChallenge(userId: string, kind: string, challenge: string) {
-  await store().set(`challenge:${kind}:${userId}`, challenge);
-}
-
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-only-insecure-secret-change-me';
+
+export function hashPin(userId: string, pin: string): string {
+  return createHmac('sha256', SESSION_SECRET).update(`${userId}:${pin}`).digest('base64url');
+}
 
 export function issueToken(userId: string): string {
   const expiry = Date.now() + 1000 * 60 * 60 * 24 * 30; // 30 dias
@@ -170,11 +162,4 @@ export function json(data: unknown, init: ResponseInit = {}): Response {
     ...init,
     headers: { 'Content-Type': 'application/json', ...(init.headers || {}) },
   });
-}
-
-export function getRPInfo(req: Request) {
-  const url = new URL(req.url);
-  const rpID = url.hostname;
-  const origin = url.origin;
-  return { rpID, origin };
 }

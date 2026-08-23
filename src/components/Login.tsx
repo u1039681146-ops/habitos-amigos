@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api, setSession } from '../lib/api';
 import { SERIES_COLORS, uniqueInitials } from '../lib/colors';
-import { authenticateFaceId, browserSupportsWebAuthn, registerFaceId } from '../lib/webauthn';
+import PinPad from './PinPad';
 import type { Profile } from '../types';
-
-const REQUIRE_FACE_ID = true;
 
 const AVATAR_PHOTOS: Record<string, string> = {
   jose: '/avatars/jose.png',
@@ -23,11 +21,18 @@ type Props = {
   compact?: boolean;
 };
 
+type PinStep = 'verify' | 'create' | 'confirm';
+
 export default function Login({ onAuthenticated, compact }: Props) {
   const [profiles, setProfiles] = useState<Profile[] | null>(null);
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [activeProfile, setActiveProfile] = useState<Profile | null>(null);
+  const [pinStep, setPinStep] = useState<PinStep>('verify');
+  const [pendingPin, setPendingPin] = useState<string | null>(null);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [shakeToken, setShakeToken] = useState(0);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     api
@@ -36,37 +41,69 @@ export default function Login({ onAuthenticated, compact }: Props) {
       .catch(() => setLoadError('No se pudo cargar la lista de perfiles.'));
   }, []);
 
-  async function handleTap(profile: Profile) {
-    if (pendingId) return;
-    setError(null);
-    setPendingId(profile.id);
+  function openPinPad(profile: Profile) {
+    setActiveProfile(profile);
+    setPinStep(profile.hasPin ? 'verify' : 'create');
+    setPendingPin(null);
+    setPinError(null);
+  }
+
+  function closePinPad() {
+    setActiveProfile(null);
+    setPendingPin(null);
+    setPinError(null);
+  }
+
+  function failAttempt(message: string, resetToStep: PinStep) {
+    setPinError(message);
+    setShakeToken((t) => t + 1);
+    setPinStep(resetToStep);
+    setPendingPin(null);
+  }
+
+  async function handlePinSubmit(pin: string) {
+    if (!activeProfile) return;
+    setPinError(null);
+
+    if (pinStep === 'verify') {
+      setBusy(true);
+      try {
+        const result = await api.pin(activeProfile.id, 'verify', pin);
+        setSession(result.token, activeProfile.id);
+        onAuthenticated(activeProfile.id);
+      } catch {
+        failAttempt('PIN incorrecto. Inténtalo de nuevo.', 'verify');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
+    if (pinStep === 'create') {
+      setPendingPin(pin);
+      setPinStep('confirm');
+      return;
+    }
+
+    // confirm
+    if (pin !== pendingPin) {
+      failAttempt('Los PIN no coinciden. Vuelve a crearlo.', 'create');
+      return;
+    }
+    setBusy(true);
     try {
-      if (!REQUIRE_FACE_ID) {
-        const result = await api.selectProfile(profile.id);
-        setSession(result.token, profile.id);
-        onAuthenticated(profile.id);
-        return;
-      }
-      if (browserSupportsWebAuthn && !browserSupportsWebAuthn()) {
-        throw new Error('Este navegador no soporta Face ID / Touch ID (WebAuthn).');
-      }
-      if (profile.hasPasskey) {
-        await authenticateFaceId(profile.id);
-      } else {
-        await registerFaceId(profile.id);
-      }
-      onAuthenticated(profile.id);
-    } catch (e) {
-      const err = e as Error & { name?: string };
-      if (err.name === 'NotAllowedError') {
-        setError('Se canceló la verificación. Inténtalo de nuevo.');
-      } else {
-        setError(err.message || 'No se pudo verificar tu identidad.');
-      }
+      const result = await api.pin(activeProfile.id, 'set', pin);
+      setSession(result.token, activeProfile.id);
+      onAuthenticated(activeProfile.id);
+    } catch {
+      failAttempt('No se pudo guardar el PIN. Inténtalo de nuevo.', 'create');
     } finally {
-      setPendingId(null);
+      setBusy(false);
     }
   }
+
+  const pinSubtitle =
+    pinStep === 'verify' ? 'Introduce tu PIN' : pinStep === 'create' ? 'Crea un PIN de 4 dígitos' : 'Confirma tu PIN';
 
   return (
     <div className={compact ? 'profile-picker' : 'login-screen'}>
@@ -84,43 +121,38 @@ export default function Login({ onAuthenticated, compact }: Props) {
           {(() => {
             const initialsById = uniqueInitials(profiles);
             return profiles.map((p, i) => (
-            <button
-              key={p.id}
-              className={`profile-tile tile-${(i % SERIES_COLORS.length) + 1}`}
-              disabled={pendingId !== null}
-              onClick={() => handleTap(p)}
-            >
-              {REQUIRE_FACE_ID && <span className="faceid-badge">🔒</span>}
-              {AVATAR_PHOTOS[p.id] ? (
-                <img
-                  className="profile-photo"
-                  src={AVATAR_PHOTOS[p.id]}
-                  alt={p.name}
-                  style={AVATAR_POSITION[p.id] ? { objectPosition: AVATAR_POSITION[p.id] } : undefined}
-                />
-              ) : (
-                <span className="initials">{initialsById[p.id]}</span>
-              )}
-              <span className="name">{p.name}</span>
-              {pendingId === p.id && (
-                <span className="tile-overlay">
-                  <span className="spinner" />
-                  {REQUIRE_FACE_ID ? (p.hasPasskey ? 'Verificando Face ID…' : 'Configurando Face ID…') : 'Entrando…'}
-                </span>
-              )}
-            </button>
+              <button
+                key={p.id}
+                className={`profile-tile tile-${(i % SERIES_COLORS.length) + 1}`}
+                onClick={() => openPinPad(p)}
+              >
+                {AVATAR_PHOTOS[p.id] ? (
+                  <img
+                    className="profile-photo"
+                    src={AVATAR_PHOTOS[p.id]}
+                    alt={p.name}
+                    style={AVATAR_POSITION[p.id] ? { objectPosition: AVATAR_POSITION[p.id] } : undefined}
+                  />
+                ) : (
+                  <span className="initials">{initialsById[p.id]}</span>
+                )}
+                <span className="name">{p.name}</span>
+              </button>
             ));
           })()}
         </div>
       )}
 
-      {error && <div className="login-error">{error}</div>}
-
-      {REQUIRE_FACE_ID && (
-        <p className="hint-text">
-          La primera vez que entras se configura Face ID / Touch ID en este dispositivo para tu
-          perfil. Las siguientes veces solo tendrás que verificarte para entrar.
-        </p>
+      {activeProfile && (
+        <PinPad
+          name={activeProfile.name}
+          subtitle={pinSubtitle}
+          error={pinError}
+          shakeToken={shakeToken}
+          busy={busy}
+          onSubmit={handlePinSubmit}
+          onCancel={closePinPad}
+        />
       )}
     </div>
   );

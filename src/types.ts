@@ -1,7 +1,7 @@
 export type Profile = {
   id: string;
   name: string;
-  hasPasskey: boolean;
+  hasPin: boolean;
 };
 
 export type Habit = {
@@ -21,7 +21,7 @@ export type DayStat = {
 export type DashboardUser = {
   id: string;
   name: string;
-  hasPasskey: boolean;
+  hasPin: boolean;
   days: DayStat[];
   streak: number;
   today: DayStat;

@@ -1,23 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { addDays, todayStr } from '../lib/date';
 import type { Habit } from '../types';
-
-function toDateStr(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function todayStr() {
-  return toDateStr(new Date());
-}
-
-function addDays(dateStr: string, delta: number) {
-  const d = new Date(`${dateStr}T00:00:00`);
-  d.setDate(d.getDate() + delta);
-  return toDateStr(d);
-}
 
 function formatLabel(dateStr: string) {
   const d = new Date(`${dateStr}T00:00:00`);
