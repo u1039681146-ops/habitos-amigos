@@ -29,7 +29,6 @@ export type DashboardUser = {
 
 export type DashboardData = {
   dateList: string[];
-  habits: Habit[];
   users: DashboardUser[];
 };
 

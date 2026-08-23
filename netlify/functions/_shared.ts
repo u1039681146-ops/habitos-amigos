@@ -82,36 +82,45 @@ export async function setUserPinHash(id: string, pinHash: string) {
   await store().setJSON(`user:${id}`, { pinHash });
 }
 
-export async function getHabits(): Promise<Habit[]> {
+// Habitos, entradas y notas se guardan por persona (clave con el userId)
+// en vez de en una lista compartida: antes, crear o borrar un habito, o
+// marcar una entrada, afectaba a los diarios de todos los demas amigos.
+
+export async function getHabits(userId: string): Promise<Habit[]> {
   const s = store();
-  const data = await s.get('habits', { type: 'json' });
+  const data = await s.get(`habits:${userId}`, { type: 'json' });
   if (!data) {
-    await s.setJSON('habits', DEFAULT_HABITS);
+    await s.setJSON(`habits:${userId}`, DEFAULT_HABITS);
     return DEFAULT_HABITS;
   }
   return data as Habit[];
 }
 
-export async function saveHabits(habits: Habit[]) {
-  await store().setJSON('habits', habits);
+export async function saveHabits(userId: string, habits: Habit[]) {
+  await store().setJSON(`habits:${userId}`, habits);
 }
 
-export async function getEntries(): Promise<Entry[]> {
-  const data = await store().get('entries', { type: 'json' });
+export async function getEntriesForUser(userId: string): Promise<Entry[]> {
+  const data = await store().get(`entries:${userId}`, { type: 'json' });
   return (data as Entry[]) || [];
 }
 
-export async function saveEntries(entries: Entry[]) {
-  await store().setJSON('entries', entries);
+export async function saveEntriesForUser(userId: string, entries: Entry[]) {
+  await store().setJSON(`entries:${userId}`, entries);
 }
 
-export async function getNotes(): Promise<DiaryNote[]> {
-  const data = await store().get('notes', { type: 'json' });
+export async function getAllEntries(): Promise<Entry[]> {
+  const lists = await Promise.all(ROSTER.map((u) => getEntriesForUser(u.id)));
+  return lists.flat();
+}
+
+export async function getNotesForUser(userId: string): Promise<DiaryNote[]> {
+  const data = await store().get(`notes:${userId}`, { type: 'json' });
   return (data as DiaryNote[]) || [];
 }
 
-export async function saveNotes(notes: DiaryNote[]) {
-  await store().setJSON('notes', notes);
+export async function saveNotesForUser(userId: string, notes: DiaryNote[]) {
+  await store().setJSON(`notes:${userId}`, notes);
 }
 
 export async function getChatMessages(): Promise<ChatMessage[]> {

@@ -1,5 +1,5 @@
 import type { Config } from '@netlify/functions';
-import { getEntries, getNotes, json, saveEntries, saveNotes, verifyToken } from './_shared.js';
+import { getEntriesForUser, getNotesForUser, json, saveEntriesForUser, saveNotesForUser, verifyToken } from './_shared.js';
 
 export default async (req: Request) => {
   const token = req.headers.get('authorization')?.replace('Bearer ', '') || null;
@@ -9,12 +9,12 @@ export default async (req: Request) => {
   if (req.method === 'GET') {
     const url = new URL(req.url);
     const date = url.searchParams.get('date');
-    const entries = await getEntries();
-    const notes = await getNotes();
+    const entries = await getEntriesForUser(userId);
+    const notes = await getNotesForUser(userId);
     if (date) {
       return json({
-        entries: entries.filter((e) => e.userId === userId && e.date === date),
-        note: notes.find((n) => n.userId === userId && n.date === date)?.note || '',
+        entries: entries.filter((e) => e.date === date),
+        note: notes.find((n) => n.date === date)?.note || '',
       });
     }
     return json({ entries, notes });
@@ -25,28 +25,28 @@ export default async (req: Request) => {
     const now = new Date().toISOString();
 
     if (body.action === 'toggle') {
-      const entries = await getEntries();
-      const idx = entries.findIndex((e) => e.userId === userId && e.date === body.date && e.habitId === body.habitId);
+      const entries = await getEntriesForUser(userId);
+      const idx = entries.findIndex((e) => e.date === body.date && e.habitId === body.habitId);
       if (idx >= 0) {
         entries[idx].done = body.done;
         entries[idx].updatedAt = now;
       } else {
         entries.push({ userId, date: body.date, habitId: body.habitId, done: body.done, updatedAt: now });
       }
-      await saveEntries(entries);
+      await saveEntriesForUser(userId, entries);
       return json({ ok: true });
     }
 
     if (body.action === 'note') {
-      const notes = await getNotes();
-      const idx = notes.findIndex((n) => n.userId === userId && n.date === body.date);
+      const notes = await getNotesForUser(userId);
+      const idx = notes.findIndex((n) => n.date === body.date);
       if (idx >= 0) {
         notes[idx].note = body.note;
         notes[idx].updatedAt = now;
       } else {
         notes.push({ userId, date: body.date, note: body.note, updatedAt: now });
       }
-      await saveNotes(notes);
+      await saveNotesForUser(userId, notes);
       return json({ ok: true });
     }
 

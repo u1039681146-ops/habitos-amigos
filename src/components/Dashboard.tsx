@@ -30,52 +30,46 @@ export default function Dashboard() {
   if (error) return <div className="error-banner">{error}</div>;
   if (!data) return <p className="empty-state">Cargando…</p>;
 
-  const totalHabits = data.habits.length;
-
   return (
     <div>
       <p className="section-title">Últimos 30 días</p>
-      {totalHabits === 0 ? (
-        <p className="empty-state">Añade hábitos desde el diario para ver el mapa de cumplimiento.</p>
-      ) : (
-        <div className="heatmap-wrap">
-          <table className="heatmap-table">
-            <thead>
-              <tr>
-                <th></th>
-                {data.dateList.map((d) => (
-                  <th key={d} title={d}>
-                    {dayLabel(d)}
-                  </th>
+      <div className="heatmap-wrap">
+        <table className="heatmap-table">
+          <thead>
+            <tr>
+              <th></th>
+              {data.dateList.map((d) => (
+                <th key={d} title={d}>
+                  {dayLabel(d)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.users.map((u) => (
+              <tr key={u.id}>
+                <td className="row-label">{u.name}</td>
+                {u.days.map((day) => (
+                  <td key={day.date}>
+                    <div
+                      className="heat-cell"
+                      style={{ background: heatColor(day.pct) }}
+                      title={`${day.date}: ${day.completed}/${day.total} hábitos`}
+                    />
+                  </td>
                 ))}
               </tr>
-            </thead>
-            <tbody>
-              {data.users.map((u) => (
-                <tr key={u.id}>
-                  <td className="row-label">{u.name}</td>
-                  {u.days.map((day) => (
-                    <td key={day.date}>
-                      <div
-                        className="heat-cell"
-                        style={{ background: heatColor(day.pct) }}
-                        title={`${day.date}: ${day.completed}/${day.total} hábitos`}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="heat-legend">
-            <span>Menos</span>
-            {SEQ_STEPS.map((c) => (
-              <div className="heat-cell" style={{ background: c }} key={c} />
             ))}
-            <span>Más</span>
-          </div>
+          </tbody>
+        </table>
+        <div className="heat-legend">
+          <span>Menos</span>
+          {SEQ_STEPS.map((c) => (
+            <div className="heat-cell" style={{ background: c }} key={c} />
+          ))}
+          <span>Más</span>
         </div>
-      )}
+      </div>
     </div>
   );
 }
