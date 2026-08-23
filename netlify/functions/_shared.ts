@@ -65,7 +65,7 @@ export async function getUsers(): Promise<User[]> {
   const s = store();
   return Promise.all(
     ROSTER.map(async (u) => {
-      const rec = (await s.get(`user:${u.id}`, { type: 'json' })) as UserRecord | null;
+      const rec = (await s.get(`user:${u.id}`, { type: 'json', consistency: 'strong' })) as UserRecord | null;
       return { ...u, pinHash: rec?.pinHash };
     }),
   );
@@ -74,7 +74,7 @@ export async function getUsers(): Promise<User[]> {
 export async function getUser(id: string): Promise<User | null> {
   const base = ROSTER.find((u) => u.id === id);
   if (!base) return null;
-  const rec = (await store().get(`user:${id}`, { type: 'json' })) as UserRecord | null;
+  const rec = (await store().get(`user:${id}`, { type: 'json', consistency: 'strong' })) as UserRecord | null;
   return { ...base, pinHash: rec?.pinHash };
 }
 
@@ -88,7 +88,7 @@ export async function setUserPinHash(id: string, pinHash: string) {
 
 export async function getHabits(userId: string): Promise<Habit[]> {
   const s = store();
-  const data = await s.get(`habits:${userId}`, { type: 'json' });
+  const data = await s.get(`habits:${userId}`, { type: 'json', consistency: 'strong' });
   if (!data) {
     await s.setJSON(`habits:${userId}`, DEFAULT_HABITS);
     return DEFAULT_HABITS;
@@ -101,7 +101,7 @@ export async function saveHabits(userId: string, habits: Habit[]) {
 }
 
 export async function getEntriesForUser(userId: string): Promise<Entry[]> {
-  const data = await store().get(`entries:${userId}`, { type: 'json' });
+  const data = await store().get(`entries:${userId}`, { type: 'json', consistency: 'strong' });
   return (data as Entry[]) || [];
 }
 
@@ -115,7 +115,7 @@ export async function getAllEntries(): Promise<Entry[]> {
 }
 
 export async function getNotesForUser(userId: string): Promise<DiaryNote[]> {
-  const data = await store().get(`notes:${userId}`, { type: 'json' });
+  const data = await store().get(`notes:${userId}`, { type: 'json', consistency: 'strong' });
   return (data as DiaryNote[]) || [];
 }
 
@@ -131,7 +131,7 @@ export type AvisoResult = {
 // El aviso generado con IA se guarda un dia por persona, para no llamar a
 // la API de OpenAI cada vez que alguien abre la pestaña de Avisos.
 export async function getCachedAviso(userId: string, date: string): Promise<AvisoResult | null> {
-  const data = await store().get(`aviso:${userId}:${date}`, { type: 'json' });
+  const data = await store().get(`aviso:${userId}:${date}`, { type: 'json', consistency: 'strong' });
   return (data as AvisoResult) || null;
 }
 
@@ -140,7 +140,7 @@ export async function setCachedAviso(userId: string, date: string, aviso: AvisoR
 }
 
 export async function getChatMessages(): Promise<ChatMessage[]> {
-  const data = await store().get('chat', { type: 'json' });
+  const data = await store().get('chat', { type: 'json', consistency: 'strong' });
   return (data as ChatMessage[]) || [];
 }
 
