@@ -71,10 +71,24 @@ export default async (req: Request) => {
   if (habits.length === 0) {
     result = { neglected: [], message: 'Todavía no tienes hábitos creados. Añade alguno desde el Diario para que pueda vigilarte.' };
   } else if (neglectedHabits.length === 0) {
-    result = {
-      neglected: [],
-      message: `${firstName}, esta semana no has fallado ni un día. Bien. Pero como te relajes un solo día, vuelves a ser el de siempre. Ni se te ocurra bajar el ritmo mañana. Stay hard.`,
-    };
+    const perfectWeek = habits.every((h) =>
+      windowDates.every((date) => entries.some((e) => e.habitId === h.id && e.date === date && e.done)),
+    );
+    let message: string | null = null;
+    if (OPENAI_API_KEY) {
+      try {
+        const mentionProject = Math.random() < PROJECT_MENTION_CHANCE ? PROJECTS[userId] : undefined;
+        message = await generatePraiseMessage(firstName, habits.map((h) => h.name), perfectWeek, mentionProject);
+      } catch {
+        message = null;
+      }
+    }
+    if (!message) {
+      message = perfectWeek
+        ? `${firstName}, semana perfecta: ni un solo hábito fallado ni un solo día. Eso es disciplina de verdad. No te relajes ahora, esto es solo el principio. Stay hard.`
+        : `${firstName}, esta semana no has fallado ningún hábito del todo, algo has hecho de cada uno. Bien. Pero "algo" no es lo mismo que "todo": aprieta más. Stay hard.`;
+    }
+    result = { neglected: [], message };
   } else {
     const neglectedList = neglectedHabits.map((h) => ({ id: h.id, name: h.name, emoji: h.emoji }));
     let message: string | null = null;
@@ -95,6 +109,54 @@ export default async (req: Request) => {
   await setCachedAviso(userId, todayStr, result);
   return json(result);
 };
+
+async function generatePraiseMessage(
+  name: string,
+  habitNames: string[],
+  perfectWeek: boolean,
+  project?: string,
+): Promise<string> {
+  const projectLine = project
+    ? ` Su proyecto es: ${project}. Menciónalo de forma natural, conectando la disciplina en sus hábitos con cómo eso también se nota en su negocio (sin exagerar, una sola vez).`
+    : '';
+  const situacion = perfectWeek
+    ? `Ha cumplido TODOS estos hábitos TODOS los días de la última semana, sin fallar ninguno: ${habitNames.join(', ')}.`
+    : `Lleva la última semana cumpliendo, sin dejar ninguno del todo abandonado, estos hábitos: ${habitNames.join(', ')}.`;
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Eres un entrenador exigente inspirado en David Goggins. Cuando alguien SÍ ha cumplido, se lo ' +
+            'reconoces de verdad y con respeto, en español: no es un cumplido blando ni cursi, es el ' +
+            'reconocimiento duro de quien exige mucho y sabe lo que cuesta el esfuerzo. Aun así nunca te ' +
+            'relajas del todo: cierras dejando claro que esto no da margen para bajar el ritmo, que la ' +
+            'disciplina de hoy es la mínima de mañana. Puedes usar alguna palabra malsonante suave si encaja ' +
+            'de forma natural, sin pasarte. Responde solo con el mensaje, de 3 a 5 frases, sin emojis, sin ' +
+            'saludos ni firmas.',
+        },
+        {
+          role: 'user',
+          content: `Escribe un mensaje para ${name}. ${situacion} Reconócele el esfuerzo de verdad y exígele que mantenga el nivel.${projectLine}`,
+        },
+      ],
+      max_tokens: 220,
+      temperature: 1,
+    }),
+  });
+  if (!res.ok) throw new Error(`OpenAI error ${res.status}`);
+  const data = await res.json();
+  const content = data.choices?.[0]?.message?.content?.trim();
+  if (!content) throw new Error('Respuesta vacía de OpenAI');
+  return content;
+}
 
 function fallbackMessage(name: string, habitList: string) {
   return `${name}, ${WINDOW_DAYS} días sin tocar: ${habitList}. Ni un día. Deja de mentirte, deja las excusas de mierda, y ponte HOY. Nadie va a hacerlo por ti.`;
