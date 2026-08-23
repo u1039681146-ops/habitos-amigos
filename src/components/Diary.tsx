@@ -19,6 +19,7 @@ export default function Diary() {
   const [error, setError] = useState<string | null>(null);
   const [newHabitName, setNewHabitName] = useState('');
   const [newHabitEmoji, setNewHabitEmoji] = useState('✅');
+  const [habitsMutating, setHabitsMutating] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +54,8 @@ export default function Diary() {
 
   async function addHabit(e: React.FormEvent) {
     e.preventDefault();
-    if (!newHabitName.trim()) return;
+    if (!newHabitName.trim() || habitsMutating) return;
+    setHabitsMutating(true);
     try {
       const res = await api.addHabit(newHabitName.trim(), newHabitEmoji.trim() || '✅');
       setHabits(res.habits);
@@ -61,15 +63,21 @@ export default function Diary() {
       setNewHabitEmoji('✅');
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      setHabitsMutating(false);
     }
   }
 
   async function removeHabit(id: string) {
+    if (habitsMutating) return;
+    setHabitsMutating(true);
     try {
       const res = await api.removeHabit(id);
       setHabits(res.habits);
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      setHabitsMutating(false);
     }
   }
 
@@ -108,7 +116,12 @@ export default function Diary() {
               <div className="habit-row" key={h.id}>
                 <span className="emoji">{h.emoji}</span>
                 <span className="habit-name">{h.name}</span>
-                <button className="remove-habit" onClick={() => removeHabit(h.id)} title="Eliminar hábito">
+                <button
+                  className="remove-habit"
+                  onClick={() => removeHabit(h.id)}
+                  disabled={habitsMutating}
+                  title="Eliminar hábito"
+                >
                   ✕
                 </button>
                 <button
@@ -134,7 +147,7 @@ export default function Diary() {
               value={newHabitName}
               onChange={(e) => setNewHabitName(e.target.value)}
             />
-            <button className="primary-btn" type="submit">
+            <button className="primary-btn" type="submit" disabled={habitsMutating}>
               Añadir
             </button>
           </form>

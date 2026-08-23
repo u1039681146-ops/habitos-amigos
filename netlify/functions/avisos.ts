@@ -13,6 +13,18 @@ import {
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const WINDOW_DAYS = 7;
 
+// Negocio/proyecto de cada uno, para que el aviso lo saque a relucir de vez
+// en cuando (no siempre) y pegue más fuerte al conectar el hábito fallado
+// con lo que se juega en su curro.
+const PROJECTS: Record<string, string> = {
+  marco: 'una consultoría en la que escala comunidades de Skool',
+  leiva: 'un negocio que provee impresión 3D para otras empresas (B2B)',
+  izan: 'una marca de ropa llamada Gymkrack que quiere hacer crecer mucho, junto a José',
+  jose: 'una marca de ropa llamada Gymkrack que quiere hacer crecer mucho, junto a Izan',
+  tomas: 'una agencia de IA que ofrece automatizaciones, chatbots y servicios de IA',
+};
+const PROJECT_MENTION_CHANCE = 0.35;
+
 function toDateStr(d: Date) {
   return d.toISOString().slice(0, 10);
 }
@@ -68,7 +80,8 @@ export default async (req: Request) => {
     let message: string | null = null;
     if (OPENAI_API_KEY) {
       try {
-        message = await generateGogginsMessage(firstName, neglectedHabits.map((h) => h.name));
+        const mentionProject = Math.random() < PROJECT_MENTION_CHANCE ? PROJECTS[userId] : undefined;
+        message = await generateGogginsMessage(firstName, neglectedHabits.map((h) => h.name), mentionProject);
       } catch {
         message = null;
       }
@@ -87,7 +100,10 @@ function fallbackMessage(name: string, habitList: string) {
   return `${name}, ${WINDOW_DAYS} días sin tocar: ${habitList}. Ni un día. Deja de mentirte, deja las excusas de mierda, y ponte HOY. Nadie va a hacerlo por ti.`;
 }
 
-async function generateGogginsMessage(name: string, habitNames: string[]): Promise<string> {
+async function generateGogginsMessage(name: string, habitNames: string[], project?: string): Promise<string> {
+  const projectLine = project
+    ? ` Su proyecto es: ${project}. Menciónalo de forma natural, conectando el hábito fallado con lo que se está jugando en su negocio si sigue así (sin exagerar ni forzarlo, una sola vez).`
+    : '';
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -111,7 +127,7 @@ async function generateGogginsMessage(name: string, habitNames: string[]): Promi
         },
         {
           role: 'user',
-          content: `Escribe un mensaje para ${name}. Lleva al menos ${WINDOW_DAYS} días seguidos sin cumplir estos hábitos: ${habitNames.join(', ')}. Machácale por haber fallado y exígele que lo retome hoy mismo, sin compasión.`,
+          content: `Escribe un mensaje para ${name}. Lleva al menos ${WINDOW_DAYS} días seguidos sin cumplir estos hábitos: ${habitNames.join(', ')}. Machácale por haber fallado y exígele que lo retome hoy mismo, sin compasión.${projectLine}`,
         },
       ],
       max_tokens: 220,
