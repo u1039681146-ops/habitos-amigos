@@ -4,9 +4,7 @@ import { SERIES_COLORS, uniqueInitials } from '../lib/colors';
 import { authenticateFaceId, browserSupportsWebAuthn, registerFaceId } from '../lib/webauthn';
 import type { Profile } from '../types';
 
-// TEMPORAL: la verificacion con Face ID esta desactivada mientras se define
-// el resto de la app. Poner en true para volver a pedir Face ID al entrar.
-const REQUIRE_FACE_ID = false;
+const REQUIRE_FACE_ID = true;
 
 const AVATAR_PHOTOS: Record<string, string> = {
   jose: '/avatars/jose.png',
