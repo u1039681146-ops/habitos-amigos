@@ -20,6 +20,15 @@ export default function Home({ onAuthenticated }: Props) {
 
         <p className="section-title home-login-title">Entrar</p>
         <Login onAuthenticated={onAuthenticated} compact />
+
+        <a
+          className="castigos-link"
+          href="https://drive.google.com/drive/folders/1NaGcEVYoE4EvyTJNGPtHF7evBb1wfJSP"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          📁 Castigos
+        </a>
       </main>
     </div>
   );
