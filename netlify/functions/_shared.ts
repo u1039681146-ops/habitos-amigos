@@ -123,6 +123,22 @@ export async function saveNotesForUser(userId: string, notes: DiaryNote[]) {
   await store().setJSON(`notes:${userId}`, notes);
 }
 
+export type AvisoResult = {
+  message: string;
+  neglected: { id: string; name: string; emoji: string }[];
+};
+
+// El aviso generado con IA se guarda un dia por persona, para no llamar a
+// la API de OpenAI cada vez que alguien abre la pestaña de Avisos.
+export async function getCachedAviso(userId: string, date: string): Promise<AvisoResult | null> {
+  const data = await store().get(`aviso:${userId}:${date}`, { type: 'json' });
+  return (data as AvisoResult) || null;
+}
+
+export async function setCachedAviso(userId: string, date: string, aviso: AvisoResult) {
+  await store().setJSON(`aviso:${userId}:${date}`, aviso);
+}
+
 export async function getChatMessages(): Promise<ChatMessage[]> {
   const data = await store().get('chat', { type: 'json' });
   return (data as ChatMessage[]) || [];

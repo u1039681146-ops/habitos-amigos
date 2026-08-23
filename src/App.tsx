@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Avisos from './components/Avisos';
 import Chat from './components/Chat';
 import Dashboard from './components/Dashboard';
 import Diary from './components/Diary';
@@ -11,7 +12,7 @@ export default function App() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [view, setView] = useState<'diary' | 'dashboard' | 'chat'>('diary');
+  const [view, setView] = useState<'diary' | 'dashboard' | 'chat' | 'avisos'>('dashboard');
 
   useEffect(() => {
     api.profiles().then((data) => setProfiles(data.users)).catch(() => {});
@@ -34,7 +35,7 @@ export default function App() {
   function handleLogout() {
     clearSession();
     setUserId(null);
-    setView('diary');
+    setView('dashboard');
   }
 
   if (checkingSession) {
@@ -83,12 +84,16 @@ export default function App() {
         <button className={`tab-btn ${view === 'chat' ? 'active' : ''}`} onClick={() => setView('chat')}>
           Chat
         </button>
+        <button className={`tab-btn ${view === 'avisos' ? 'active' : ''}`} onClick={() => setView('avisos')}>
+          Avisos
+        </button>
       </nav>
 
       <main className={view === 'chat' ? 'view-body view-body-chat' : 'view-body'}>
         {view === 'diary' && <Diary />}
         {view === 'dashboard' && <Dashboard />}
         {view === 'chat' && <Chat profiles={profiles} myUserId={userId} />}
+        {view === 'avisos' && <Avisos />}
       </main>
     </div>
   );
