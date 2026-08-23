@@ -61,7 +61,7 @@ export default async (req: Request) => {
   } else if (neglectedHabits.length === 0) {
     result = {
       neglected: [],
-      message: `${firstName}, esta semana has cumplido con todos tus hábitos ni un solo día fallado. Eso no te da permiso para relajarte: mañana vuelve a currártelo igual. Stay hard.`,
+      message: `${firstName}, esta semana no has fallado ni un día. Bien. Pero como te relajes un solo día, vuelves a ser el de siempre. Ni se te ocurra bajar el ritmo mañana. Stay hard.`,
     };
   } else {
     const neglectedList = neglectedHabits.map((h) => ({ id: h.id, name: h.name, emoji: h.emoji }));
@@ -84,7 +84,7 @@ export default async (req: Request) => {
 };
 
 function fallbackMessage(name: string, habitList: string) {
-  return `${name}, llevas ${WINDOW_DAYS} días sin tocar: ${habitList}. Nadie va a hacerlo por ti mientras pones excusas. Deja de mentirte y ponte hoy mismo.`;
+  return `${name}, ${WINDOW_DAYS} días sin tocar: ${habitList}. Ni un día. Deja de mentirte, deja las excusas de mierda, y ponte HOY. Nadie va a hacerlo por ti.`;
 }
 
 async function generateGogginsMessage(name: string, habitNames: string[]): Promise<string> {
@@ -100,19 +100,22 @@ async function generateGogginsMessage(name: string, habitNames: string[]): Promi
         {
           role: 'system',
           content:
-            'Eres un entrenador motivacional inspirado en el estilo de David Goggins: directo, exigente, sin ' +
-            'excusas, hablas en español claro y sin rodeos. Eres duro y confrontas a la persona con el hecho ' +
-            'de que ha fallado, para empujarla a retomarlo hoy mismo. No usas insultos degradantes, lenguaje ' +
-            'de odio ni amenazas: la dureza es de exigencia y disciplina, no de desprecio. Responde solo con ' +
-            'el mensaje, de 3 a 5 frases, sin emojis, sin saludos ni firmas.',
+            'Eres un entrenador brutalmente agresivo inspirado en David Goggins: grita en texto, sin filtros, ' +
+            'sin paños calientes, en español. No consuelas ni justificas: le echas en cara sin piedad que ha ' +
+            'fallado, usas frases cortas y contundentes tipo mazazo, mayúsculas puntuales para énfasis, y ' +
+            'puedes usar tacos moderados en español (joder, cojones, coño) como remate. Cero comprensión, ' +
+            'cero excusas aceptadas. Aun así: nunca insultas su identidad (nada sobre su físico, familia, ' +
+            'origen, orientación, etc.), nunca usas lenguaje de odio ni amenazas de ningún tipo — la agresividad ' +
+            'es sobre su falta de disciplina y sus excusas, no sobre quién es. Responde solo con el mensaje, de ' +
+            '3 a 5 frases, sin emojis, sin saludos ni firmas.',
         },
         {
           role: 'user',
-          content: `Escribe un mensaje para ${name}. Lleva al menos ${WINDOW_DAYS} días seguidos sin cumplir estos hábitos: ${habitNames.join(', ')}. Hazle ver que ha fallado y motívalo a retomarlo hoy mismo.`,
+          content: `Escribe un mensaje para ${name}. Lleva al menos ${WINDOW_DAYS} días seguidos sin cumplir estos hábitos: ${habitNames.join(', ')}. Machácale por haber fallado y exígele que lo retome hoy mismo, sin compasión.`,
         },
       ],
       max_tokens: 220,
-      temperature: 0.9,
+      temperature: 1,
     }),
   });
   if (!res.ok) throw new Error(`OpenAI error ${res.status}`);
