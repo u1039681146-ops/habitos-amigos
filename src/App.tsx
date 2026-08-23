@@ -56,7 +56,7 @@ export default function App() {
   const myInitials = uniqueInitials(profiles)[userId] || '?';
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${view === 'chat' ? 'app-shell-chat' : ''}`}>
       <header className="app-header">
         <div className="who">
           <span className="avatar-dot" style={{ background: color }}>

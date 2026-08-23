@@ -93,7 +93,11 @@ export default function Chat({ profiles, myUserId }: Props) {
                 </span>
               )}
               <div className="chat-bubble">
-                {!mine && <div className="chat-sender">{nameFor(m.userId)}</div>}
+                {!mine && (
+                  <div className="chat-sender" style={{ color: colorFor(m.userId) }}>
+                    {nameFor(m.userId)}
+                  </div>
+                )}
                 <div className="chat-text">{m.text}</div>
                 <div className="chat-time">{formatTime(m.createdAt)}</div>
               </div>

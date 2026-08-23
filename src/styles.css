@@ -70,6 +70,14 @@ button {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* En el chat, la cabecera y las pestañas se quedan fijas arriba y solo
+   se desplazan los mensajes: si no, cada mensaje nuevo empuja todo hacia
+   abajo y hay que volver a subir para encontrar la cabecera. */
+.app-shell-chat {
+  height: 100dvh;
+  overflow: hidden;
+}
+
 /* ---------- Login / profile picker ---------- */
 
 .login-screen {
@@ -899,26 +907,32 @@ button {
 .chat-bubble {
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 8px 12px;
+  border-radius: 18px 18px 18px 5px;
+  padding: 9px 13px 7px;
+  box-shadow: 0 1px 1px rgba(11, 11, 11, 0.04);
 }
 
 .chat-row.mine .chat-bubble {
-  background: var(--series-1);
+  background: linear-gradient(155deg, var(--series-1), #123a63);
   color: #fff;
   border-color: transparent;
+  border-radius: 18px 18px 5px 18px;
 }
 
 .chat-sender {
   font-size: 11.5px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--series-1);
   margin-bottom: 2px;
 }
 
+.chat-row.mine .chat-sender {
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .chat-text {
-  font-size: 14px;
-  line-height: 1.35;
+  font-size: 14.5px;
+  line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
 }
