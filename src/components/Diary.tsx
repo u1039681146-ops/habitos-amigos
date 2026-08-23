@@ -81,6 +81,25 @@ export default function Diary() {
     }
   }
 
+  async function moveHabit(index: number, direction: -1 | 1) {
+    const targetIndex = index + direction;
+    if (habitsMutating || targetIndex < 0 || targetIndex >= habits.length) return;
+    const previous = habits;
+    const next = [...habits];
+    [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+    setHabits(next);
+    setHabitsMutating(true);
+    try {
+      const res = await api.reorderHabits(next.map((h) => h.id));
+      setHabits(res.habits);
+    } catch (e) {
+      setHabits(previous);
+      setError((e as Error).message);
+    } finally {
+      setHabitsMutating(false);
+    }
+  }
+
   async function saveNote() {
     try {
       await api.saveNote(date, note);
@@ -112,8 +131,26 @@ export default function Diary() {
           <p className="section-title">Hábitos de hoy</p>
           {habits.length === 0 && <p className="empty-state">Todavía no hay hábitos. Añade el primero abajo.</p>}
           <div className="habit-list">
-            {habits.map((h) => (
+            {habits.map((h, index) => (
               <div className="habit-row" key={h.id}>
+                <div className="reorder-btns">
+                  <button
+                    className="reorder-btn"
+                    onClick={() => moveHabit(index, -1)}
+                    disabled={habitsMutating || index === 0}
+                    aria-label={`Subir ${h.name}`}
+                  >
+                    ▲
+                  </button>
+                  <button
+                    className="reorder-btn"
+                    onClick={() => moveHabit(index, 1)}
+                    disabled={habitsMutating || index === habits.length - 1}
+                    aria-label={`Bajar ${h.name}`}
+                  >
+                    ▼
+                  </button>
+                </div>
                 <span className="emoji">{h.emoji}</span>
                 <span className="habit-name">{h.name}</span>
                 <button

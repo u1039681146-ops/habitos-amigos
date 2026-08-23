@@ -531,6 +531,33 @@ button {
   padding: 12px 14px;
 }
 
+.reorder-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.reorder-btn {
+  width: 20px;
+  height: 16px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reorder-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
 .habit-row .emoji {
   font-size: 20px;
   width: 26px;

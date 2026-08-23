@@ -27,6 +27,15 @@ export default async (req: Request) => {
       await saveHabits(userId, next);
       return json({ habits: next });
     }
+    if (body.action === 'reorder') {
+      const order: unknown[] = Array.isArray(body.order) ? body.order : [];
+      const byId = new Map(habits.map((h) => [h.id, h]));
+      const reordered = order.filter((id): id is string => typeof id === 'string' && byId.has(id)).map((id) => byId.get(id)!);
+      const missing = habits.filter((h) => !reordered.includes(h));
+      const next = [...reordered, ...missing];
+      await saveHabits(userId, next);
+      return json({ habits: next });
+    }
     return json({ error: 'accion invalida' }, { status: 400 });
   }
 

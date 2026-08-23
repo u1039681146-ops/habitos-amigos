@@ -45,6 +45,8 @@ export const api = {
     request('/api/habits', { method: 'POST', body: JSON.stringify({ action: 'add', name, emoji }) }),
   removeHabit: (id: string) =>
     request('/api/habits', { method: 'POST', body: JSON.stringify({ action: 'remove', id }) }),
+  reorderHabits: (order: string[]) =>
+    request('/api/habits', { method: 'POST', body: JSON.stringify({ action: 'reorder', order }) }),
   entriesForDate: (date: string) => request(`/api/entries?date=${date}`),
   toggleEntry: (date: string, habitId: string, done: boolean) =>
     request('/api/entries', { method: 'POST', body: JSON.stringify({ action: 'toggle', date, habitId, done }) }),
