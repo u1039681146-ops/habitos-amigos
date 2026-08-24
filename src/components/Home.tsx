@@ -1,5 +1,6 @@
 import Dashboard from './Dashboard';
 import Login from './Login';
+import ParticlesBackground from './ParticlesBackground';
 
 type Props = {
   onAuthenticated: (userId: string) => void;
@@ -7,7 +8,8 @@ type Props = {
 
 export default function Home({ onAuthenticated }: Props) {
   return (
-    <div className="app-shell">
+    <div className="app-shell home-shell">
+      <ParticlesBackground />
       <header className="app-header home-header">
         <div>
           <div className="brand-title">Hábitos entre amigos</div>

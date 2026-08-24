@@ -78,6 +78,26 @@ button {
   overflow: hidden;
 }
 
+/* Puntos decorativos de fondo en la pantalla de inicio: puramente visuales,
+   no reciben clics ni afectan a la disposición del resto del contenido. */
+.home-shell {
+  position: relative;
+}
+
+.particles-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particle-dot {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
 /* ---------- Login / profile picker ---------- */
 
 .login-screen {
