@@ -17,10 +17,11 @@ export default async (req: Request) => {
   if (req.method === 'POST') {
     const body = await req.json();
     const text = String(body.text || '').trim().slice(0, 1000);
-    if (!text) return json({ error: 'Mensaje vacío' }, { status: 400 });
+    const imageId = typeof body.imageId === 'string' && body.imageId ? body.imageId : undefined;
+    if (!text && !imageId) return json({ error: 'Mensaje vacío' }, { status: 400 });
 
     const messages = await getChatMessages();
-    const message = { id: randomId(), userId, text, createdAt: new Date().toISOString() };
+    const message = { id: randomId(), userId, text, imageId, createdAt: new Date().toISOString() };
     messages.push(message);
     if (messages.length > MAX_STORED) messages.splice(0, messages.length - MAX_STORED);
     await saveChatMessages(messages);

@@ -36,5 +36,6 @@ export type ChatMessage = {
   id: string;
   userId: string;
   text: string;
+  imageId?: string;
   createdAt: string;
 };

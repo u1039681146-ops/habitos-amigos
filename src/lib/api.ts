@@ -55,7 +55,17 @@ export const api = {
   dashboard: (days = 14, today?: string) =>
     request(`/api/dashboard?days=${days}${today ? `&today=${today}` : ''}`),
   chat: () => request('/api/chat'),
-  sendChat: (text: string) => request('/api/chat', { method: 'POST', body: JSON.stringify({ text }) }),
+  sendChat: (text: string, imageId?: string) =>
+    request('/api/chat', { method: 'POST', body: JSON.stringify({ text, imageId }) }),
+  uploadChatImage: async (blob: Blob) => {
+    const token = getToken();
+    const headers: Record<string, string> = { 'Content-Type': blob.type };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch('/api/chat-image', { method: 'POST', headers, body: blob });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+    return data.id as string;
+  },
   avisos: (today: string, refresh = false) => request(`/api/avisos?today=${today}${refresh ? '&refresh=1' : ''}`),
   progress: (today: string) => request(`/api/progress?today=${today}`),
 };

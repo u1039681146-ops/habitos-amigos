@@ -44,6 +44,7 @@ export type ChatMessage = {
   id: string;
   userId: string;
   text: string;
+  imageId?: string;
   createdAt: string;
 };
 
@@ -137,6 +138,20 @@ export async function getCachedAviso(userId: string, date: string): Promise<Avis
 
 export async function setCachedAviso(userId: string, date: string, aviso: AvisoResult) {
   await store().setJSON(`aviso:${userId}:${date}`, aviso);
+}
+
+export async function saveChatImage(id: string, data: ArrayBuffer, contentType: string, userId: string) {
+  await store().set(`chat-image:${id}`, data, { metadata: { contentType, userId } });
+}
+
+export async function getChatImage(
+  id: string,
+): Promise<{ data: ArrayBuffer; contentType: string } | null> {
+  const s = store();
+  const result = await s.getWithMetadata(`chat-image:${id}`, { type: 'arrayBuffer', consistency: 'strong' });
+  if (!result) return null;
+  const contentType = (result.metadata?.contentType as string) || 'application/octet-stream';
+  return { data: result.data, contentType };
 }
 
 export async function getChatMessages(): Promise<ChatMessage[]> {

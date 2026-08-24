@@ -4,6 +4,8 @@ import { colorForIndex, uniqueInitials } from '../lib/colors';
 import type { ChatMessage, Profile } from '../types';
 
 const POLL_MS = 4000;
+const MAX_DIMENSION = 1600;
+const JPEG_QUALITY = 0.82;
 
 type Props = {
   profiles: Profile[];
@@ -15,13 +17,52 @@ function formatTime(iso: string) {
   return new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(d);
 }
 
+// Redimensiona y comprime la foto en el propio navegador antes de subirla:
+// una foto de móvil sin tocar puede pesar varios MB, esto lo deja ligero.
+function compressImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        const scale = MAX_DIMENSION / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('No se pudo procesar la imagen'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error('No se pudo procesar la imagen'))),
+        'image/jpeg',
+        JPEG_QUALITY,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('No se pudo leer la imagen'));
+    };
+    img.src = url;
+  });
+}
+
 export default function Chat({ profiles, myUserId }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialsById = uniqueInitials(profiles);
 
@@ -74,6 +115,28 @@ export default function Chat({ profiles, myUserId }: Props) {
     }
   }
 
+  async function handleImagePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || uploadingImage) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Ese archivo no es una imagen.');
+      return;
+    }
+    setUploadingImage(true);
+    setError(null);
+    try {
+      const compressed = await compressImage(file);
+      const imageId = await api.uploadChatImage(compressed);
+      await api.sendChat('', imageId);
+      await load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
   return (
     <div className="chat-panel">
       {error && <div className="error-banner">{error}</div>}
@@ -98,16 +161,37 @@ export default function Chat({ profiles, myUserId }: Props) {
                     {nameFor(m.userId)}
                   </div>
                 )}
-                <div className="chat-text">{m.text}</div>
+                {m.imageId && (
+                  <a href={`/api/chat-image?id=${m.imageId}`} target="_blank" rel="noopener noreferrer">
+                    <img className="chat-image" src={`/api/chat-image?id=${m.imageId}`} alt="" loading="lazy" />
+                  </a>
+                )}
+                {m.text && <div className="chat-text">{m.text}</div>}
                 <div className="chat-time">{formatTime(m.createdAt)}</div>
               </div>
             </div>
           );
         })}
+        {uploadingImage && (
+          <div className="chat-row mine">
+            <div className="chat-bubble chat-bubble-uploading">Subiendo foto…</div>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
       <form className="chat-input-row" onSubmit={handleSend}>
+        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImagePick} hidden />
+        <button
+          type="button"
+          className="chat-photo-btn"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={sending || uploadingImage}
+          aria-label="Enviar foto"
+          title="Enviar foto"
+        >
+          📷
+        </button>
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
