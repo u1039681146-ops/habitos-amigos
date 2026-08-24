@@ -31,6 +31,15 @@ export default function Home({ onAuthenticated }: Props) {
         >
           📁 Castigos
         </a>
+
+        <a
+          className="castigos-link"
+          href="https://drive.google.com/drive/folders/1kgLWYq0cuXCcsfwe41UG3s2kr-6xaG0F"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          📁 Testimonios
+        </a>
       </main>
     </div>
   );

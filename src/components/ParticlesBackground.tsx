@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 // PRNG determinista (mulberry32): mismo patrón de puntos siempre, sin
 // recalcular posiciones aleatorias en cada render.
 function mulberry32(seed: number) {
@@ -12,7 +14,18 @@ function mulberry32(seed: number) {
 
 const COLORS = ['#2a78d6', '#6da7ec', '#9ec5f4', '#cde2fb', '#8a8f98', '#c7ccd3'];
 
-type Dot = { id: number; x: number; y: number; size: number; color: string; opacity: number };
+type Dot = {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+  opacity: number;
+  dx: number;
+  dy: number;
+  duration: number;
+  delay: number;
+};
 
 function generateDots(count: number, seed: number): Dot[] {
   const rand = mulberry32(seed);
@@ -23,6 +36,10 @@ function generateDots(count: number, seed: number): Dot[] {
     size: 2 + rand() * 8,
     color: COLORS[Math.floor(rand() * COLORS.length)],
     opacity: 0.2 + rand() * 0.5,
+    dx: (rand() - 0.5) * 24,
+    dy: (rand() - 0.5) * 24,
+    duration: 7 + rand() * 10,
+    delay: rand() * -12,
   }));
 }
 
@@ -35,14 +52,22 @@ export default function ParticlesBackground() {
         <span
           key={d.id}
           className="particle-dot"
-          style={{
-            left: `${d.x}%`,
-            top: `${d.y}%`,
-            width: d.size,
-            height: d.size,
-            background: d.color,
-            opacity: d.opacity,
-          }}
+          style={
+            {
+              left: `${d.x}%`,
+              top: `${d.y}%`,
+              marginLeft: -d.size / 2,
+              marginTop: -d.size / 2,
+              width: d.size,
+              height: d.size,
+              background: d.color,
+              opacity: d.opacity,
+              '--dx': `${d.dx}px`,
+              '--dy': `${d.dy}px`,
+              animationDuration: `${d.duration}s`,
+              animationDelay: `${d.delay}s`,
+            } as CSSProperties
+          }
         />
       ))}
     </div>

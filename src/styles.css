@@ -100,7 +100,25 @@ button {
 .particle-dot {
   position: absolute;
   border-radius: 50%;
-  transform: translate(-50%, -50%);
+  animation-name: particle-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@keyframes particle-drift {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .particle-dot {
+    animation: none;
+  }
 }
 
 /* ---------- Login / profile picker ---------- */
