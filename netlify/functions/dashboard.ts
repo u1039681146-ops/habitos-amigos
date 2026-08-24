@@ -33,9 +33,18 @@ export default async (req: Request) => {
 
   const perUser = await Promise.all(
     users.map(async (u) => {
-      const totalHabits = (await getHabits(u.id)).length;
+      const userHabits = await getHabits(u.id);
+      const totalHabits = userHabits.length;
+      // Solo cuentan las entradas de habitos que existen ahora mismo: si
+      // borras un habito, las marcas que hiciste de el se quedan guardadas
+      // (para no perder el historial) pero no deben seguir sumando en el
+      // mapa de calor, o el numero de cumplidos deja de cuadrar con la
+      // lista de habitos actual.
+      const habitIds = new Set(userHabits.map((h) => h.id));
       const dayStats = dateList.map((date) => {
-        const completed = entries.filter((e) => e.userId === u.id && e.date === date && e.done).length;
+        const completed = entries.filter(
+          (e) => e.userId === u.id && e.date === date && e.done && habitIds.has(e.habitId),
+        ).length;
         const pct = totalHabits > 0 ? completed / totalHabits : 0;
         return { date, completed, total: totalHabits, pct };
       });

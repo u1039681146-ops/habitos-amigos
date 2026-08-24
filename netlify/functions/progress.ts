@@ -32,6 +32,10 @@ export default async (req: Request) => {
     return json({ points: [] });
   }
 
+  // Igual que en el dashboard: las marcas de habitos ya borrados no deben
+  // seguir sumando, o el % no cuadra con la lista de habitos actual.
+  const habitIds = new Set(habits.map((h) => h.id));
+
   let firstDate = entries[0].date;
   for (const e of entries) {
     if (e.date < firstDate) firstDate = e.date;
@@ -43,7 +47,7 @@ export default async (req: Request) => {
   const points: { date: string; pct: number }[] = [];
   for (const d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
     const dateStr = toDateStr(d);
-    const completed = entries.filter((e) => e.date === dateStr && e.done).length;
+    const completed = entries.filter((e) => e.date === dateStr && e.done && habitIds.has(e.habitId)).length;
     points.push({ date: dateStr, pct: completed / totalHabits });
   }
 
