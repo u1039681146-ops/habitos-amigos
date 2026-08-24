@@ -57,4 +57,5 @@ export const api = {
   chat: () => request('/api/chat'),
   sendChat: (text: string) => request('/api/chat', { method: 'POST', body: JSON.stringify({ text }) }),
   avisos: (today: string, refresh = false) => request(`/api/avisos?today=${today}${refresh ? '&refresh=1' : ''}`),
+  progress: (today: string) => request(`/api/progress?today=${today}`),
 };

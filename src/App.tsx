@@ -56,42 +56,44 @@ export default function App() {
   const myInitials = uniqueInitials(profiles)[userId] || '?';
 
   return (
-    <div className={`app-shell ${view === 'chat' ? 'app-shell-chat' : ''}`}>
-      <header className="app-header">
-        <div className="who">
-          <span className="avatar-dot" style={{ background: color }}>
-            {myInitials}
-          </span>
-          <div>
-            <div className="greeting">Hola,</div>
-            <div className="name">{me?.name ?? userId}</div>
+    <div className="app-shell">
+      <div className={`top-bar ${view === 'chat' ? 'top-bar-sticky' : ''}`}>
+        <header className="app-header">
+          <div className="who">
+            <span className="avatar-dot" style={{ background: color }}>
+              {myInitials}
+            </span>
+            <div>
+              <div className="greeting">Hola,</div>
+              <div className="name">{me?.name ?? userId}</div>
+            </div>
           </div>
-        </div>
-        <div className="header-actions">
-          <button className="icon-btn" onClick={handleLogout}>
-            Salir
-          </button>
-        </div>
-      </header>
+          <div className="header-actions">
+            <button className="icon-btn" onClick={handleLogout}>
+              Salir
+            </button>
+          </div>
+        </header>
 
-      <nav className="tab-bar">
-        <button className={`tab-btn ${view === 'diary' ? 'active' : ''}`} onClick={() => setView('diary')}>
-          Diario
-        </button>
-        <button className={`tab-btn ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>
-          Dashboard
-        </button>
-        <button className={`tab-btn ${view === 'chat' ? 'active' : ''}`} onClick={() => setView('chat')}>
-          Chat
-        </button>
-        <button className={`tab-btn ${view === 'avisos' ? 'active' : ''}`} onClick={() => setView('avisos')}>
-          Avisos
-        </button>
-      </nav>
+        <nav className="tab-bar">
+          <button className={`tab-btn ${view === 'diary' ? 'active' : ''}`} onClick={() => setView('diary')}>
+            Diario
+          </button>
+          <button className={`tab-btn ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>
+            Dashboard
+          </button>
+          <button className={`tab-btn ${view === 'chat' ? 'active' : ''}`} onClick={() => setView('chat')}>
+            Chat
+          </button>
+          <button className={`tab-btn ${view === 'avisos' ? 'active' : ''}`} onClick={() => setView('avisos')}>
+            Avisos
+          </button>
+        </nav>
+      </div>
 
       <main className={view === 'chat' ? 'view-body view-body-chat' : 'view-body'}>
         {view === 'diary' && <Diary />}
-        {view === 'dashboard' && <Dashboard />}
+        {view === 'dashboard' && <Dashboard myUserId={userId} />}
         {view === 'chat' && <Chat profiles={profiles} myUserId={userId} />}
         {view === 'avisos' && <Avisos />}
       </main>

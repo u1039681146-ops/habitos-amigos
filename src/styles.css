@@ -70,12 +70,17 @@ button {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* En el chat, la cabecera y las pestañas se quedan fijas arriba y solo
-   se desplazan los mensajes: si no, cada mensaje nuevo empuja todo hacia
-   abajo y hay que volver a subir para encontrar la cabecera. */
-.app-shell-chat {
-  height: 100dvh;
-  overflow: hidden;
+/* En el chat, la cabecera y las pestañas se quedan fijas arriba con
+   position:sticky sobre el scroll normal de la página (en vez de forzar
+   una altura fija con overflow:hidden): eso es lo que hace que respete
+   bien el teclado del móvil al escribir, que si no descuadra la barra
+   de escritura dejándola muy arriba, lejos del teclado. */
+.top-bar-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--page);
+  box-shadow: 0 1px 0 var(--border);
 }
 
 /* Puntos decorativos de fondo en la pantalla de inicio: puramente visuales,
@@ -816,6 +821,28 @@ button {
   padding: 30px 10px;
 }
 
+.progress-chart {
+  width: 100%;
+  height: 150px;
+  display: block;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.progress-axis {
+  stroke: var(--text-primary);
+  stroke-width: 1;
+}
+
+.progress-line {
+  fill: none;
+  stroke: var(--status-good);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
 .error-banner {
   background: color-mix(in srgb, var(--status-critical) 14%, transparent);
   color: var(--status-critical);
@@ -831,21 +858,15 @@ button {
 .view-body-chat {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  padding-bottom: 14px;
+  padding-bottom: 0;
 }
 
 .chat-panel {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
 }
 
 .chat-messages {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -992,10 +1013,13 @@ button {
 }
 
 .chat-input-row {
+  position: sticky;
+  bottom: 0;
   display: flex;
   gap: 8px;
-  padding-top: 10px;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding: 10px 0;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  background: var(--page);
   border-top: 1px solid var(--border);
 }
 

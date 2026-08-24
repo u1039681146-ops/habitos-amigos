@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { todayStr } from '../lib/date';
+import ProgressChart from './ProgressChart';
 import type { DashboardData } from '../types';
 
 const SEQ_STEPS = ['#e1e0d9', '#d3f0da', '#a8e2b8', '#7cd394', '#4fc072', '#2fa354', '#1f7a3c', '#0f4d24'];
@@ -16,9 +17,14 @@ function dayLabel(dateStr: string) {
   return d.getDate();
 }
 
-export default function Dashboard() {
+type Props = {
+  myUserId?: string;
+};
+
+export default function Dashboard({ myUserId }: Props) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ date: string; pct: number }[] | null>(null);
 
   useEffect(() => {
     api
@@ -26,6 +32,14 @@ export default function Dashboard() {
       .then(setData)
       .catch((e) => setError(e.message));
   }, []);
+
+  useEffect(() => {
+    if (!myUserId) return;
+    api
+      .progress(todayStr())
+      .then((res) => setProgress(res.points))
+      .catch(() => setProgress([]));
+  }, [myUserId]);
 
   if (error) return <div className="error-banner">{error}</div>;
   if (!data) return <p className="empty-state">Cargando…</p>;
@@ -70,6 +84,17 @@ export default function Dashboard() {
           <span>Más</span>
         </div>
       </div>
+
+      {myUserId && (
+        <>
+          <p className="section-title">Tu progreso desde que empezaste</p>
+          {progress === null ? (
+            <p className="empty-state">Cargando…</p>
+          ) : (
+            <ProgressChart points={progress} />
+          )}
+        </>
+      )}
     </div>
   );
 }
