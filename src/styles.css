@@ -892,10 +892,15 @@ button {
 
 .progress-line {
   fill: none;
-  stroke: var(--status-good);
   stroke-width: 1.5;
   stroke-linejoin: round;
   stroke-linecap: round;
+}
+
+.progress-dot {
+  fill: var(--status-good);
+  stroke: var(--surface-1);
+  stroke-width: 1.5;
 }
 
 .error-banner {
