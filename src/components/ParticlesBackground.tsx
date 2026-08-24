@@ -36,10 +36,10 @@ function generateDots(count: number, seed: number): Dot[] {
     size: 2 + rand() * 8,
     color: COLORS[Math.floor(rand() * COLORS.length)],
     opacity: 0.2 + rand() * 0.5,
-    dx: (rand() - 0.5) * 24,
-    dy: (rand() - 0.5) * 24,
-    duration: 7 + rand() * 10,
-    delay: rand() * -12,
+    dx: (rand() - 0.5) * 180,
+    dy: (rand() - 0.5) * 180,
+    duration: 12 + rand() * 18,
+    delay: rand() * -30,
   }));
 }
 
