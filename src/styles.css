@@ -1152,7 +1152,7 @@ button {
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface-1);
-  font-size: 18px;
+  color: var(--series-1);
   cursor: pointer;
   display: flex;
   align-items: center;

@@ -195,7 +195,16 @@ export default function Chat({ profiles, myUserId }: Props) {
           aria-label="Enviar foto"
           title="Enviar foto"
         >
-          📷
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+            <path
+              d="M4 8.5h3.2l1.4-2.2a1.6 1.6 0 0 1 1.35-.8h4.1a1.6 1.6 0 0 1 1.35.8l1.4 2.2H20a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 20.5H4A1.5 1.5 0 0 1 2.5 19v-9A1.5 1.5 0 0 1 4 8.5Z"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinejoin="round"
+            />
+            <circle cx="12" cy="14" r="3.4" stroke="currentColor" strokeWidth="1.7" />
+            <circle cx="17.6" cy="11.4" r="0.9" fill="currentColor" />
+          </svg>
         </button>
         <input
           value={text}
