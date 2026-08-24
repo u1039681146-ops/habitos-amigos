@@ -61,6 +61,7 @@ export default function Chat({ profiles, myUserId }: Props) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [previewImageId, setPreviewImageId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -162,9 +163,13 @@ export default function Chat({ profiles, myUserId }: Props) {
                   </div>
                 )}
                 {m.imageId && (
-                  <a href={`/api/chat-image?id=${m.imageId}`} target="_blank" rel="noopener noreferrer">
-                    <img className="chat-image" src={`/api/chat-image?id=${m.imageId}`} alt="" loading="lazy" />
-                  </a>
+                  <img
+                    className="chat-image"
+                    src={`/api/chat-image?id=${m.imageId}`}
+                    alt=""
+                    loading="lazy"
+                    onClick={() => setPreviewImageId(m.imageId!)}
+                  />
                 )}
                 {m.text && <div className="chat-text">{m.text}</div>}
                 <div className="chat-time">{formatTime(m.createdAt)}</div>
@@ -202,6 +207,24 @@ export default function Chat({ profiles, myUserId }: Props) {
           Enviar
         </button>
       </form>
+
+      {previewImageId && (
+        <div className="image-preview-overlay" onClick={() => setPreviewImageId(null)}>
+          <button
+            className="image-preview-close"
+            onClick={() => setPreviewImageId(null)}
+            aria-label="Cerrar foto"
+          >
+            ✕
+          </button>
+          <img
+            className="image-preview-img"
+            src={`/api/chat-image?id=${previewImageId}`}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
